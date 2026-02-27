@@ -1,0 +1,91 @@
+name: Local AI - Jotas Pro
+version: 0.0.2
+schema: v1
+
+models:
+  
+  - name: GPT-OSS 20B
+    provider: ollama
+    model: gpt-oss:20b
+    apiBase: http://localhost:11434
+    roles:
+      - chat
+      - edit
+      - apply
+    capabilities:
+      - tool_use
+
+  - name: Qwen Coder 7B Agent
+    provider: ollama
+    model: qwen2.5-coder:7b
+    apiBase: http://localhost:11434
+    roles:
+      - chat
+      - edit
+      - apply
+    capabilities:
+      - tool_use
+    defaultCompletionOptions:
+      contextLength: 8192
+      maxTokens: 512
+      temperature: 0.1
+
+  - name: Qwen2.5-Coder 1.5B Autocomplete
+    provider: ollama
+    model: qwen2.5-coder:1.5b-base
+    roles:
+      - autocomplete
+    autocompleteOptions:
+      debounceDelay: 150
+      maxPromptTokens: 768
+      onlyMyCode: true
+      useCache: true
+      useImports: true
+      useRecentlyEdited: true
+      useRecentlyOpened: false
+
+  - name: Nomic Embed
+    provider: ollama
+    model: nomic-embed-text:latest
+    roles:
+      - embed
+
+context:
+  - provider: file
+  - provider: currentFile
+  - provider: open
+    params:
+      onlyPinned: true
+  - provider: diff
+  - provider: problems
+
+rules:
+  - Responde en español si el usuario escribe en español.
+  - Genera código, nombres de variables y comentarios técnicos en inglés.
+  - Antes de escribir código, resume el objetivo y propone un plan de 3 a 5 pasos.
+  - Trabaja por slices pequeños; no modifiques más de 5 archivos por iteración.
+  - Antes de editar, enumera exactamente qué archivos vas a crear o tocar.
+  - No refactorices código no relacionado con la tarea actual.
+  - Si falta contexto, pide usar @File o @Open y especifica el archivo exacto.
+  - Después de cada cambio, revisa imports, tipos y errores evidentes antes de terminar.
+  - Termina cada iteración con: hecho, pendientes y siguiente paso recomendado.
+
+prompts:
+  - name: Build slice
+    description: Implementar una feature por etapas
+    prompt: >
+      Implementa solo el slice solicitado.
+
+      1) enumera archivos a crear/modificar
+      2) aplica cambios mínimos y consistentes
+      3) revisa errores básicos
+      4) resume qué quedó listo y qué falta
+
+  - name: Architecture pass
+    description: Diseñar antes de construir
+    prompt: >
+      No escribas código todavía.
+
+      Diseña arquitectura, árbol de carpetas, entidades, endpoints,
+      dependencias, flujo de usuario y divide el trabajo en hitos
+      con criterios de aceptación claros.
